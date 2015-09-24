@@ -82,6 +82,7 @@ function social_bookmarking_toolbar($url, $title, $description='')
     $html .= '<!-- AddThis Button BEGIN -->';
     $html .= '<div class="addthis_toolbox addthis_default_style addthis_32x32_style"';
     $html .= ' addthis:url="' . html_escape($url) . '" addthis:title="' . html_escape($title) . '" addthis:description="' . html_escape($description) . '">';
+	$html .= '<h2>Social</h2>';
     $services = social_bookmarking_get_services();
     $serviceSettings = social_bookmarking_get_service_settings();
     $booleanFilter = new Omeka_Filter_Boolean;
