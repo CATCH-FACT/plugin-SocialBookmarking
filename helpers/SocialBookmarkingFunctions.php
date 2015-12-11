@@ -41,8 +41,13 @@ function social_bookmarking_get_services_xml()
 {
     static $xml = null;
     if (!$xml) {
-        $file = file_get_contents(SocialBookmarkingPlugin::ADDTHIS_SERVICES_URL);
-        $xml = new SimpleXMLElement($file);
+        try {
+            $file = file_get_contents(SocialBookmarkingPlugin::ADDTHIS_SERVICES_URL);
+            $xml = new SimpleXMLElement($file);
+        } catch (Exception $e) {
+            _log('Caught exception: ' . print_r($e->getMessage(), true) . "\n");
+            return null;
+        }
     }
     return $xml;
 }
@@ -53,16 +58,18 @@ function social_bookmarking_get_services()
     $booleanFilter = new Omeka_Filter_Boolean;
     if (!$services) {
         $xml = social_bookmarking_get_services_xml();
-        $services = array();
-        foreach ($xml->data->services->service as $service) {
-            $serviceCode = (string)$service->code;
-            $services[$serviceCode] = array(
-                'code' => $serviceCode,
-                'name' => (string)$service->name,
-                'icon' => (string)$service->icon32,
-                'script_only' => $booleanFilter->filter((string)$service->script_only),
-            );
-        }
+        if ($xml){
+            $services = array();
+            foreach ($xml->data->services->service as $service) {
+                $serviceCode = (string)$service->code;
+                $services[$serviceCode] = array(
+                    'code' => $serviceCode,
+                    'name' => (string)$service->name,
+                    'icon' => (string)$service->icon32,
+                    'script_only' => $booleanFilter->filter((string)$service->script_only),
+                );
+            }
+        }    
     }
     return $services;
 }
@@ -84,12 +91,17 @@ function social_bookmarking_toolbar($url, $title, $description='')
     $html .= ' addthis:url="' . html_escape($url) . '" addthis:title="' . html_escape($title) . '" addthis:description="' . html_escape($description) . '">';
 	$html .= '<h2>Social</h2>';
     $services = social_bookmarking_get_services();
-    $serviceSettings = social_bookmarking_get_service_settings();
-    $booleanFilter = new Omeka_Filter_Boolean;
-    foreach ($serviceSettings as $serviceCode => $value) {
-        if ($booleanFilter->filter($value) && array_key_exists($serviceCode, $services)) {
-            $html .= '<a class="addthis_button_' . html_escape($serviceCode) . '"></a>';
+    if ($services){
+        $serviceSettings = social_bookmarking_get_service_settings();
+        $booleanFilter = new Omeka_Filter_Boolean;
+        foreach ($serviceSettings as $serviceCode => $value) {
+            if ($booleanFilter->filter($value) && array_key_exists($serviceCode, $services)) {
+                $html .= '<a class="addthis_button_' . html_escape($serviceCode) . '"></a>';
+            }
         }
+    }
+    else{
+        $html .= __('Sociale functies tijdelijk offline.');
     }
     $html .= '<a class="addthis_button_compact"></a>';
     //$html .= '<a class="addthis_counter addthis_bubble_style"></a>';
